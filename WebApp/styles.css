@@ -275,6 +275,33 @@ select:focus {
     text-align: center;
 }
 
+.catalog-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+}
+
+.catalog-tab {
+    min-height: 40px;
+    margin-bottom: -1px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: 0 10px;
+    color: var(--muted);
+    background: transparent;
+    font-weight: 800;
+}
+
+.catalog-tab:hover {
+    color: var(--primary);
+}
+
+.catalog-tab.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+}
+
 .type-filters {
     display: flex;
     flex-wrap: wrap;
@@ -353,6 +380,33 @@ select:focus {
     background: rgba(25, 77, 58, 0.9);
     font-size: 12px;
     font-weight: 800;
+}
+
+.favorite-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 50%;
+    color: #ffffff;
+    background: rgba(24, 32, 27, 0.48);
+    font-size: 21px;
+    line-height: 1;
+    backdrop-filter: blur(5px);
+}
+
+.favorite-button:hover {
+    background: rgba(24, 32, 27, 0.7);
+}
+
+.favorite-button.active {
+    border-color: #ffffff;
+    color: #9b4f32;
+    background: #ffffff;
 }
 
 .space-body {
@@ -772,6 +826,10 @@ body.dark-theme .primary-button,
 body.dark-theme .filter-button.active,
 body.dark-theme .select-button {
     color: #122019;
+}
+
+body.dark-theme .catalog-tab.active {
+    color: var(--primary);
 }
 
 body.dark-theme .availability {

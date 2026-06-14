@@ -87,14 +87,17 @@ const spaces = [
 
 const state = {
     activeType: "all",
+    activeView: "all",
     selectedSpaceId: null,
     modalSpaceId: null,
+    favoriteSpaces: loadFavorites(),
     bookings: loadBookings()
 };
 
 const spaceGrid = document.getElementById("spaceGrid");
 const resultCount = document.getElementById("resultCount");
 const emptyState = document.getElementById("emptyState");
+const catalogTabs = document.getElementById("catalogTabs");
 const typeFilters = document.getElementById("typeFilters");
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
@@ -141,6 +144,18 @@ function saveBookings() {
     localStorage.setItem("coworkingBookings", JSON.stringify(state.bookings));
 }
 
+function loadFavorites() {
+    try {
+        return JSON.parse(localStorage.getItem("coworkingFavorites")) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveFavorites() {
+    localStorage.setItem("coworkingFavorites", JSON.stringify(state.favoriteSpaces));
+}
+
 function formatPrice(value) {
     return `${value.toLocaleString("ru-RU")} ₽`;
 }
@@ -163,11 +178,22 @@ function getFilteredSpaces() {
     return spaces.filter((space) => {
         const matchesType = state.activeType === "all" || space.type === state.activeType;
         const matchesGuests = space.capacity >= guests;
+        const matchesView = state.activeView === "all" || state.favoriteSpaces.includes(space.id);
         const matchesQuery = space.name.toLowerCase().includes(query)
             || space.address.toLowerCase().includes(query)
             || space.district.toLowerCase().includes(query);
 
-        return matchesType && matchesGuests && matchesQuery;
+        return matchesType && matchesGuests && matchesView && matchesQuery;
+    });
+}
+
+function renderCatalogTabs() {
+    catalogTabs.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === state.activeView);
+
+        if (button.dataset.view === "favorites") {
+            button.textContent = `Избранное (${state.favoriteSpaces.length})`;
+        }
     });
 }
 
@@ -175,16 +201,26 @@ function renderSpaces() {
     const filteredSpaces = getFilteredSpaces();
 
     spaceGrid.innerHTML = "";
+    renderCatalogTabs();
     resultCount.textContent = `${filteredSpaces.length} вариантов`;
+    emptyState.textContent = state.activeView === "favorites"
+        ? "В избранном пока нет подходящих пространств."
+        : "Подходящие пространства не найдены.";
     emptyState.classList.toggle("show", filteredSpaces.length === 0);
 
     filteredSpaces.forEach((space) => {
+        const isFavorite = state.favoriteSpaces.includes(space.id);
         const card = document.createElement("article");
         card.className = `space-card ${state.selectedSpaceId === space.id ? "selected" : ""}`;
         card.innerHTML = `
             <div class="space-image">
                 <img src="${space.image}" alt="${space.name}">
                 <span class="availability">Свободно</span>
+                <button class="favorite-button ${isFavorite ? "active" : ""}" type="button"
+                    data-action="favorite" data-id="${space.id}"
+                    aria-label="${isFavorite ? "Убрать из избранного" : "Добавить в избранное"}">
+                    ${isFavorite ? "★" : "☆"}
+                </button>
             </div>
             <div class="space-body">
                 <div class="space-meta">
@@ -330,6 +366,17 @@ typeFilters.addEventListener("click", (event) => {
     renderSpaces();
 });
 
+catalogTabs.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+
+    if (!button) {
+        return;
+    }
+
+    state.activeView = button.dataset.view;
+    renderSpaces();
+});
+
 searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
     bookingDate.value = searchDate.value;
@@ -352,6 +399,20 @@ spaceGrid.addEventListener("click", (event) => {
 
     if (button.dataset.action === "details") {
         openModal(spaceId);
+        return;
+    }
+
+    if (button.dataset.action === "favorite") {
+        if (state.favoriteSpaces.includes(spaceId)) {
+            state.favoriteSpaces = state.favoriteSpaces.filter((id) => id !== spaceId);
+            showToast("Коворкинг удалён из избранного");
+        } else {
+            state.favoriteSpaces.push(spaceId);
+            showToast("Коворкинг добавлен в избранное");
+        }
+
+        saveFavorites();
+        renderSpaces();
         return;
     }
 

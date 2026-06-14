@@ -67,7 +67,13 @@
                         <p class="eyebrow">Доступные варианты</p>
                         <h2 id="resultsTitle">Коворкинги Москвы</h2>
                     </div>
-                    <span class="result-count" id="resultCount">0 вариантов</span>
+                    <div class="section-heading-actions">
+                        <span class="result-count" id="resultCount">0 вариантов</span>
+                        <button class="primary-button add-space-button" id="openAddSpace" type="button">
+                            <span aria-hidden="true">+</span>
+                            Добавить
+                        </button>
+                    </div>
                 </div>
 
                 <div class="catalog-tabs" id="catalogTabs" aria-label="Разделы каталога">
@@ -213,6 +219,86 @@
                 <p id="modalDescription"></p>
                 <div class="amenities" id="modalAmenities"></div>
                 <button class="primary-button" id="modalSelect" type="button">Выбрать пространство</button>
+            </div>
+        </article>
+    </div>
+
+    <div class="modal" id="addSpaceModal" aria-hidden="true">
+        <article class="modal-card form-modal-card" role="dialog" aria-modal="true" aria-labelledby="addSpaceTitle">
+            <button class="modal-close" id="addSpaceClose" type="button" aria-label="Закрыть">×</button>
+            <div class="modal-content">
+                <p class="eyebrow">Новое пространство</p>
+                <h2 id="addSpaceTitle">Добавить коворкинг</h2>
+
+                <form class="add-space-form" id="addSpaceForm">
+                    <label class="field">
+                        <span>Название</span>
+                        <input id="newSpaceName" type="text" maxlength="60" required>
+                    </label>
+
+                    <div class="form-row">
+                        <label class="field">
+                            <span>Тип пространства</span>
+                            <select id="newSpaceType">
+                                <option value="open">Открытое место</option>
+                                <option value="office">Кабинет</option>
+                                <option value="meeting">Переговорная</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Вместимость</span>
+                            <input id="newSpaceCapacity" type="number" min="1" max="50" value="1" required>
+                        </label>
+                    </div>
+
+                    <label class="field">
+                        <span>Адрес</span>
+                        <input id="newSpaceAddress" type="text" maxlength="100" placeholder="Например, м. Сокол, улица Балтийская, 9" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Стоимость за час, ₽</span>
+                        <input id="newSpacePrice" type="number" min="1" max="100000" value="500" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Описание</span>
+                        <textarea id="newSpaceDescription" maxlength="400" rows="4" required></textarea>
+                    </label>
+
+                    <fieldset class="form-amenities">
+                        <legend>Удобства</legend>
+                        <div class="amenity-options">
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Wi-Fi">
+                                <span>Wi-Fi</span>
+                            </label>
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Кофе">
+                                <span>Кофе</span>
+                            </label>
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Монитор">
+                                <span>Монитор</span>
+                            </label>
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Экран">
+                                <span>Экран</span>
+                            </label>
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Кухня">
+                                <span>Кухня</span>
+                            </label>
+                            <label class="amenity-option">
+                                <input type="checkbox" name="newAmenity" value="Видеосвязь">
+                                <span>Видеосвязь</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <button class="primary-button" type="submit">Добавить коворкинг</button>
+                </form>
             </div>
         </article>
     </div>

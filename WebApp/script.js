@@ -85,6 +85,8 @@ const spaces = [
     }
 ];
 
+spaces.push(...loadUserSpaces());
+
 const state = {
     activeType: "all",
     activeView: "all",
@@ -103,6 +105,7 @@ const catalogTabs = document.getElementById("catalogTabs");
 const typeFilters = document.getElementById("typeFilters");
 const amenityFilters = document.getElementById("amenityFilters");
 const resetAmenities = document.getElementById("resetAmenities");
+const openAddSpace = document.getElementById("openAddSpace");
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
 const searchDate = document.getElementById("searchDate");
@@ -135,7 +138,30 @@ const modalAddress = document.getElementById("modalAddress");
 const modalDescription = document.getElementById("modalDescription");
 const modalAmenities = document.getElementById("modalAmenities");
 const modalSelect = document.getElementById("modalSelect");
+const addSpaceModal = document.getElementById("addSpaceModal");
+const addSpaceClose = document.getElementById("addSpaceClose");
+const addSpaceForm = document.getElementById("addSpaceForm");
+const newSpaceName = document.getElementById("newSpaceName");
+const newSpaceType = document.getElementById("newSpaceType");
+const newSpaceCapacity = document.getElementById("newSpaceCapacity");
+const newSpaceAddress = document.getElementById("newSpaceAddress");
+const newSpacePrice = document.getElementById("newSpacePrice");
+const newSpaceDescription = document.getElementById("newSpaceDescription");
 const toast = document.getElementById("toast");
+
+function loadUserSpaces() {
+    try {
+        const savedSpaces = JSON.parse(localStorage.getItem("coworkingUserSpaces"));
+        return Array.isArray(savedSpaces) ? savedSpaces : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveUserSpaces() {
+    const userSpaces = spaces.filter((space) => space.isCustom);
+    localStorage.setItem("coworkingUserSpaces", JSON.stringify(userSpaces));
+}
 
 function loadBookings() {
     try {
@@ -159,6 +185,15 @@ function loadFavorites() {
 
 function saveFavorites() {
     localStorage.setItem("coworkingFavorites", JSON.stringify(state.favoriteSpaces));
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 function formatPrice(value) {
@@ -230,11 +265,14 @@ function renderSpaces() {
 
     filteredSpaces.forEach((space) => {
         const isFavorite = state.favoriteSpaces.includes(space.id);
+        const safeName = escapeHtml(space.name);
+        const safeType = escapeHtml(space.typeLabel);
+        const safeAddress = escapeHtml(space.address);
         const card = document.createElement("article");
         card.className = `space-card ${state.selectedSpaceId === space.id ? "selected" : ""}`;
         card.innerHTML = `
             <div class="space-image">
-                <img src="${space.image}" alt="${space.name}">
+                <img src="${space.image}" alt="${safeName}">
                 <span class="availability">Свободно</span>
                 <button class="favorite-button ${isFavorite ? "active" : ""}" type="button"
                     data-action="favorite" data-id="${space.id}"
@@ -244,13 +282,13 @@ function renderSpaces() {
             </div>
             <div class="space-body">
                 <div class="space-meta">
-                    <span class="space-type">${space.typeLabel}</span>
-                    <span class="rating">★ ${space.rating}</span>
+                    <span class="space-type">${safeType}</span>
+                    <span class="rating">${space.rating ? `★ ${space.rating}` : "Новое"}</span>
                 </div>
-                <h3>${space.name}</h3>
-                <p class="space-address">${space.address}</p>
+                <h3>${safeName}</h3>
+                <p class="space-address">${safeAddress}</p>
                 <div class="feature-list">
-                    ${space.features.map((feature) => `<span>${feature}</span>`).join("")}
+                    ${space.features.map((feature) => `<span>${escapeHtml(feature)}</span>`).join("")}
                     <span>До ${space.capacity} чел.</span>
                 </div>
                 <div class="card-footer">
@@ -384,6 +422,32 @@ function closeModal() {
     spaceModal.classList.remove("show");
     spaceModal.setAttribute("aria-hidden", "true");
     state.modalSpaceId = null;
+}
+
+function openAddSpaceModal() {
+    addSpaceModal.classList.add("show");
+    addSpaceModal.setAttribute("aria-hidden", "false");
+    newSpaceName.focus();
+}
+
+function closeAddSpaceModal() {
+    addSpaceModal.classList.remove("show");
+    addSpaceModal.setAttribute("aria-hidden", "true");
+}
+
+function resetCatalogFilters() {
+    state.activeType = "all";
+    state.activeView = "all";
+    state.activeAmenities = [];
+    searchInput.value = "";
+    guestFilter.value = "1";
+    typeFilters.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.type === "all");
+    });
+    amenityFilters.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+        input.checked = false;
+    });
+    resetAmenities.hidden = true;
 }
 
 function showToast(text) {
@@ -585,6 +649,65 @@ bookingList.addEventListener("click", (event) => {
 
 cancelEditButton.addEventListener("click", finishEditing);
 
+openAddSpace.addEventListener("click", openAddSpaceModal);
+addSpaceClose.addEventListener("click", closeAddSpaceModal);
+
+addSpaceModal.addEventListener("click", (event) => {
+    if (event.target === addSpaceModal) {
+        closeAddSpaceModal();
+    }
+});
+
+addSpaceForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const typeSettings = {
+        open: {
+            label: "Открытое место",
+            image: "assets/open-space.jpg"
+        },
+        office: {
+            label: "Приватный кабинет",
+            image: "assets/private-office.jpg"
+        },
+        meeting: {
+            label: "Переговорная",
+            image: "assets/meeting-room.jpg"
+        }
+    };
+    const selectedType = typeSettings[newSpaceType.value];
+    const features = Array.from(
+        addSpaceForm.querySelectorAll('input[name="newAmenity"]:checked'),
+        (input) => input.value
+    );
+    const newSpace = {
+        id: Date.now(),
+        name: newSpaceName.value.trim(),
+        type: newSpaceType.value,
+        typeLabel: selectedType.label,
+        address: newSpaceAddress.value.trim(),
+        district: newSpaceAddress.value.trim(),
+        capacity: Number(newSpaceCapacity.value),
+        price: Number(newSpacePrice.value),
+        rating: null,
+        image: selectedType.image,
+        features,
+        description: newSpaceDescription.value.trim(),
+        isCustom: true
+    };
+
+    spaces.unshift(newSpace);
+    saveUserSpaces();
+    resetCatalogFilters();
+    addSpaceForm.reset();
+    newSpaceCapacity.value = "1";
+    newSpacePrice.value = "500";
+    closeAddSpaceModal();
+    renderSpaces();
+    showToast(`Коворкинг «${newSpace.name}» добавлен`);
+    document.getElementById("spaces").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 modalClose.addEventListener("click", closeModal);
 
 spaceModal.addEventListener("click", (event) => {
@@ -603,8 +726,14 @@ modalSelect.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && spaceModal.classList.contains("show")) {
-        closeModal();
+    if (event.key === "Escape") {
+        if (spaceModal.classList.contains("show")) {
+            closeModal();
+        }
+
+        if (addSpaceModal.classList.contains("show")) {
+            closeAddSpaceModal();
+        }
     }
 });
 
